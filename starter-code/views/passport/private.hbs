@@ -1,9 +1,42 @@
 <div>Private page</div>
-{{#if user}}
-  <div>
-    <h1>Who's the best developer?</h1>
-    <h1>You are, <span style="color: red;">{{ user.username}}</span>. You are! </h1>
-    <img src="http://media.giphy.com/media/UsK5GqD3e0huU/giphy.gif" alt="You rock.">
-    <a href="/">Index</a>
-  </div>
+{{#if message}}
+<div class="error-message">{{ message }}</div>
 {{/if}}
+{{#if boss}}
+<h2>Hey boss, puedes registrar nuevos usuarios</h2>
+
+<form action="/create" method="POST" id="form-container">
+  <label for="username">Username</label>
+  <input id="username" type="text" name="username">
+  <br><br>
+  <label for="password">Password</label>
+  <input id="password" type="password" name="password"><br>
+  <select name="role">
+    <option value="DEVELOPER">Developer</option>
+    <option value="TA">TA</option>
+  </select>
+  <br><br>
+  <button>Create user</button>
+</form>
+
+<ul>
+  {{#each users}}
+  <li>
+    <a href="#">{{username}}</a> <a href="delete/{{id}}">Borrar<a/>  
+  </li>
+  {{/each}}
+</ul>
+
+{{/if}}
+
+{{#if ta}}
+<h1>Hola {{user.username}} eres TA y puedes actualizar tus datos</h1>
+<form method="POST" action="/edit/{{user.id}}">
+<label for="username">Username:</label>
+<input type="text" name="username">
+<label for="password">Password:</label>
+<input type="text" name="password">
+<button type="submit">Actualizar</button>
+</form>
+{{/if}}
+ 

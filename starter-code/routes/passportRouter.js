@@ -10,7 +10,12 @@ const passport = require("passport")
 
 const ensureLogin = require("connect-ensure-login");
 
-
+const isBoss = (req, res) => {
+  if (req.user.role === "BOSS") return true
+}
+const isTa = (req, res) => {
+  if (req.user.role === "TA") return true
+}
 
 //sign up
 passportRouter.get("/signup", (req, res, next) => res.render("../views/passport/signup"))
@@ -44,7 +49,47 @@ passportRouter.post("/signup", (req, res, next) => {
     })
 
 })
+//create
+passportRouter.get("/create", ensureLogin.ensureLoggedIn(), (req, res, next) => res.render("../views/passport/private"))
 
+passportRouter.post("/create", (req, res, next) => {
+  console.log("******* Llegó a crear")
+  const { username, password, role } = req.body
+  console.log("**************", role)
+  if (username === "" || password === "") {
+    res.render("../views/passport/private", { message: "Indicate username and password" });
+    return;
+  }
+
+  User.findOne({ username })
+    .then(user => {
+      if (user) {
+        res.render("../views/passport/private", { message: "The username already exists" });
+        return;
+      }
+
+      const salt = bcrypt.genSaltSync(bcryptSalt);
+      const hashPass = bcrypt.hashSync(password, salt);
+      console.log("************************", role)
+      const newUser = new User({
+        username,
+        password: hashPass,
+        role,
+      });
+
+      newUser.save()
+        .then(x => res.redirect("/"))
+        .catch(err => res.render("/private", { message: `Something went wrong: ${err}` }))
+    })
+})
+
+//edit
+passportRouter.post("/edit/:id", (req, res, next) => {
+  const { username, password } = req.body
+  User.findByIdAndUpdate({ _id: req.params.id }, { $set: { username, password } })
+  .then(user => res.render("../views/passport/private", { message: "Campos actualizados" }))
+  .catch(error => console.log(error))     
+})
 
 //login
 passportRouter.get("/login", (req, res, next) => {
@@ -59,7 +104,23 @@ passportRouter.post('/login', passport.authenticate("local", {
 }))
 
 passportRouter.get("/private-page", ensureLogin.ensureLoggedIn(), (req, res) => {
-  res.render("passport/private", { user: req.user });
+  User.find()                                                                              
+    .then(allUsers => {  
+      console.log(allUsers)                                                                 
+      if (allUsers.length == 0) { 
+        res.render("passport/private", { user: req.user, boss: isBoss(req, res), ta: isTa(req, res), message: "No hay usuarios" }) 
+        return
+      }  
+      res.render("passport/private", { user: req.user, boss: isBoss(req, res), ta: isTa(req, res), users: allUsers })                                                                
+    })   
+    .catch(error => console.log(error))
+  
+  // if (req.user.role == "BOSS") res.render("passport/private", { user: req.user });
+  // else { 
+  //   console.log("FALLO") 
+  //   res.redirect("/")
+  // }
+
 });
 
 
